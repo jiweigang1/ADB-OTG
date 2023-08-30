@@ -1,5 +1,11 @@
 package com.htetznaing.adbotg;
 
+import static com.htetznaing.adbotg.Message.CONNECTING;
+import static com.htetznaing.adbotg.Message.DEVICE_FOUND;
+import static com.htetznaing.adbotg.Message.DEVICE_NOT_FOUND;
+import static com.htetznaing.adbotg.Message.FLASHING;
+import static com.htetznaing.adbotg.Message.INSTALLING_PROGRESS;
+
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -13,11 +19,6 @@ import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
-
 import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -35,11 +36,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
 import com.cgutman.adblib.AdbBase64;
-import com.cgutman.adblib.AdbConnection;
 import com.cgutman.adblib.AdbCrypto;
-import com.cgutman.adblib.AdbStream;
-import com.cgutman.adblib.UsbChannel;
 import com.htetznaing.adbotg.Adapter.SliderAdapterExample;
 import com.htetznaing.adbotg.Model.SliderItem;
 import com.htetznaing.adbotg.UI.SpinnerDialog;
@@ -50,19 +52,20 @@ import com.smarteist.autoimageslider.SliderView;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import static com.htetznaing.adbotg.Message.CONNECTING;
-import static com.htetznaing.adbotg.Message.DEVICE_FOUND;
-import static com.htetznaing.adbotg.Message.DEVICE_NOT_FOUND;
-import static com.htetznaing.adbotg.Message.FLASHING;
-import static com.htetznaing.adbotg.Message.INSTALLING_PROGRESS;
 
-public class MainActivity extends AppCompatActivity implements TextView.OnEditorActionListener, View.OnKeyListener {
+import io.github.muntashirakon.AdbConnectionManager;
+import io.github.muntashirakon.adb.AbsAdbConnectionManager;
+import io.github.muntashirakon.adb.AdbPairingRequiredException;
+import io.github.muntashirakon.adb.AdbStream;
+
+public class MainActivity1 extends AppCompatActivity implements TextView.OnEditorActionListener, View.OnKeyListener {
     private Handler handler;
     private UsbDevice mDevice;
     private TextView tvStatus,logs;
     private ImageView usb_icon;
     private AdbCrypto adbCrypto;
-    private AdbConnection adbConnection;
+    //private AdbConnection adbConnection;
+    private AbsAdbConnectionManager manager;
     private UsbManager mManager;
     private RelativeLayout terminalView;
     private LinearLayout checkContainer;
@@ -75,10 +78,12 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
     private boolean doubleBackToExitPressedOnce = false;
     private AdbStream stream;
     private SpinnerDialog waitingDialog;
+    private  static  String KYE_PATH;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        KYE_PATH = getApplication().getFilesDir().getAbsolutePath();
 
         tvStatus = findViewById(R.id.tv_status);
         usb_icon = findViewById(R.id.usb_icon);
@@ -123,11 +128,11 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
                         break;
 
                     case FLASHING:
-                        Toast.makeText(MainActivity.this, "Flashing", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity1.this, "Flashing", Toast.LENGTH_SHORT).show();
                         break;
 
                     case INSTALLING_PROGRESS:
-                        Toast.makeText(MainActivity.this, "Progress", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity1.this, "Progress", Toast.LENGTH_SHORT).show();
                         break;
 
                 }
@@ -232,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
     private void waitingDialog(){
         closeWaiting();
         waitingDialog = SpinnerDialog.displayDialog(this, "IMPORTANT ⚡",
-                "You may need to accept a prompt on the target device if you are connecting "+
+                        "You may need to accept a prompt on the target device if you are connecting "+
                         "to it for the first time from this device.", false);
     }
 
@@ -267,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
                     try {
                         setAdbInterface(device, intf);
                     } catch (Exception e) {
-                        Log.w(Const.TAG, "setAdbInterface(device, intf) fail", e);
+                        Log.e(Const.TAG, "setAdbInterface(device, intf) fail", e);
                     }
                 }
             }.start();
@@ -316,9 +321,9 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
 
     // Sets the current USB device and interface
     private synchronized boolean setAdbInterface(UsbDevice device, UsbInterface intf) throws IOException, InterruptedException {
-        if (adbConnection != null) {
-            adbConnection.close();
-            adbConnection = null;
+        if (manager != null) {
+            manager.close();
+            manager = null;
             mDevice = null;
         }
 
@@ -327,11 +332,17 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
             if (connection != null) {
                 if (connection.claimInterface(intf, false)) {
                     handler.sendEmptyMessage(CONNECTING);
-                    adbConnection = AdbConnection.create(new UsbChannel(connection, intf), adbCrypto);
-                    adbConnection.connect();
-                    //TODO: DO NOT DELETE IT, I CAN'T EXPLAIN WHY
-                    adbConnection.open("shell:exec date");
+                    manager   = AdbConnectionManager.getInstance(KYE_PATH);
+                    try {
+                        manager.connect(connection, intf);
+                    } catch (AdbPairingRequiredException e) {
+                        throw new RuntimeException(e);
+                    }
 
+                    //TODO: DO NOT DELETE IT, I CAN'T EXPLAIN WHY 这个坑不知道是否可以去掉，当前去掉没有问题
+                   // manager.openStream("shell:exec date");
+                    String dm = manager.command("shell:","pm list packages");
+                    Log.d("",dm);
                     mDevice = device;
                     handler.sendEmptyMessage(DEVICE_FOUND);
                     return true;
@@ -357,9 +368,9 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
         super.onDestroy();
         unregisterReceiver(mUsbReceiver);
         try {
-            if (adbConnection != null) {
-                adbConnection.close();
-                adbConnection = null;
+            if (manager != null) {
+                manager.close();
+                manager = null;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -371,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
         // Open the shell stream of ADB
         logs.setText("");
         try {
-            stream = adbConnection.open("shell:");
+            stream = manager.openStream("shell:");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return;
@@ -389,8 +400,10 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
             public void run() {
                 while (!stream.isClosed()) {
                     try {
+                        byte[] buffer = new byte[1024];
+                       int le = stream.read(buffer,0,buffer.length);
                         // Print each thing we read from the shell stream
-                        final String[] output = {new String(stream.read(), "US-ASCII")};
+                        final String[] output = {new String(buffer,0,le, "US-ASCII")};
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -414,10 +427,7 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                         return;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return;
-                    } catch (IOException e) {
+                    }  catch (IOException e) {
                         e.printStackTrace();
                         return;
                     }
@@ -445,15 +455,14 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
                 }else if (cmd.equalsIgnoreCase("exit")) {
                     finish();
                 }else {
-                    stream.write((cmd+"\n").getBytes("UTF-8"));
+                    byte[] d = (cmd+"\n").getBytes("UTF-8");
+                    stream.write(d,0,d.length);
                 }
                 edCommand.setText("");
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-        }else Toast.makeText(MainActivity.this, "No command", Toast.LENGTH_SHORT).show();
+        }else Toast.makeText(MainActivity1.this, "No command", Toast.LENGTH_SHORT).show();
     }
 
     public void open(View view) {
@@ -496,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
     @Override
     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
         /* We always return false because we want to dismiss the keyboard */
-        if (adbConnection != null && actionId == EditorInfo.IME_ACTION_DONE) {
+        if (manager != null && actionId == EditorInfo.IME_ACTION_DONE) {
             putCommand();
         }
 
@@ -513,3 +522,4 @@ public class MainActivity extends AppCompatActivity implements TextView.OnEditor
         }
     }
 }
+

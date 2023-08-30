@@ -1,5 +1,7 @@
 package com.cgutman.adblib;
 
+import android.util.Log;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -175,6 +177,7 @@ public class AdbConnection implements Closeable {
 
 						case AdbProtocol.CMD_CNXN:
 							synchronized (conn) {
+								Log.d("","AdbProtocol.CMD_CNXN");
 								/* We need to store the max data size */
 								conn.maxData = msg.getArg1();
 
