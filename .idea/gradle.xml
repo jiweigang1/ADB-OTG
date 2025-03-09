@@ -4,9 +4,17 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+<<<<<<< HEAD
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleHome" value="/usr/local/Cellar/gradle/5.2.1/libexec" />
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+=======
+        <option name="testRunner" value="GRADLE" />
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="/usr/local/Cellar/gradle/5.2.1/libexec" />
+        <option name="gradleJvm" value="jbr-17" />
+>>>>>>> d668f07ec4fa31d998a2b6ab9225ffb1ac44eec4
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
@@ -14,7 +22,10 @@
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>
+<<<<<<< HEAD
         <option name="resolveExternalAnnotations" value="false" />
+=======
+>>>>>>> d668f07ec4fa31d998a2b6ab9225ffb1ac44eec4
       </GradleProjectSettings>
     </option>
   </component>

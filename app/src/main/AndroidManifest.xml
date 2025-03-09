@@ -11,7 +11,11 @@
 
         <activity
             android:exported="true"
+<<<<<<< HEAD
             android:name=".MainActivity1"
+=======
+            android:name=".MainActivity"
+>>>>>>> d668f07ec4fa31d998a2b6ab9225ffb1ac44eec4
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

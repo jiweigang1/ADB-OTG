@@ -4,7 +4,11 @@ android {
     compileSdkVersion 34
 
     defaultConfig {
+<<<<<<< HEAD
         minSdkVersion 21
+=======
+        minSdkVersion 14
+>>>>>>> d668f07ec4fa31d998a2b6ab9225ffb1ac44eec4
         targetSdkVersion 34
     }
     buildTypes {
@@ -19,8 +23,11 @@ android {
 dependencies {
     api fileTree(dir: 'libs', include: ['*.jar'])
     testImplementation 'junit:junit:4.13.2'
+<<<<<<< HEAD
     implementation 'com.github.MuntashirAkon:sun-security-android:1.1'
     implementation 'org.conscrypt:conscrypt-android:2.5.2'
     implementation 'org.bouncycastle:bcprov-jdk15to18:1.78'
     implementation 'androidx.annotation:annotation:1.0.0'
+=======
+>>>>>>> d668f07ec4fa31d998a2b6ab9225ffb1ac44eec4
 }
